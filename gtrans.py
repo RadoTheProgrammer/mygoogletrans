@@ -1,11 +1,13 @@
-import requests,os,mypkg,json
-from search import encode
-from dataprint import print
-GOOGLEAPIS="translate.googleapis.com"
-CLIENTS5="clients5.google.com"
-GOOGLE="translate.google."
-GOOGLECOM=GOOGLE+"com"
-GOOGLECH=GOOGLE+"ch"
+import os
+import json
+from urllib.parse import quote_plus
+
+import requests
+
+S_GOOGLEAPIS="translate.googleapis.com"
+S_CLIENTS5="clients5.google.com"
+S_GOOGLECOM="translate.google.com"
+S_GOOGLECH="translate.google.ch"
 
 def b(service,path):
     if path.startswith("/"):path=path[1:]
@@ -21,7 +23,7 @@ def getitem(obj,indexs):
 def setitem(obj,indexs,value):
     getitem(obj,indexs[:-1])[indexs[-1]]=value
 class GoogleTrans:
-    def __init__(self,service=GOOGLECH,client=["t","gtx","dict-chrome-ex"],path="translate_a/single",input_encoding="UTF-8",output_encoding="UTF-8"):
+    def __init__(self,service=S_GOOGLECH,client=["t","gtx","dict-chrome-ex"],path="translate_a/single",input_encoding="UTF-8",output_encoding="UTF-8"):
         self.service=service
         self.client=[client] if isinstance(client,str) else client
         self.path=path
@@ -31,8 +33,8 @@ class GoogleTrans:
         base=b(self.service,self.path)
         params["ie"]=self.input_encoding
         params["oe"]=self.output_encoding
-        params["dj"]=1
-        p="&".join(map(lambda i:(str(i[0])+"="+encode(i[1])),params.items()))
+        params["dj"]="1"
+        p="&".join(map(lambda i:(str(i[0])+"="+quote_plus(i[1])),params.items()))
         for c in self.client.copy():
             url=base+"?client="+c+"&"+p
             print(url)
