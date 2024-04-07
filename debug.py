@@ -1,8 +1,10 @@
 # %%
 from gtrans import GoogleTrans
-g = GoogleTrans()
+t = GoogleTrans()
 
 # %%
-g.translate('Hello, World!', 'en', 'es')
+t.definitions("maison")
 
 
+
+# %%
