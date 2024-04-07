@@ -1,6 +1,8 @@
 import os
 import json
 from urllib.parse import quote_plus
+import json
+import sys
 
 import requests
 
@@ -8,6 +10,9 @@ S_GOOGLEAPIS="translate.googleapis.com"
 S_CLIENTS5="clients5.google.com"
 S_GOOGLECOM="translate.google.com"
 S_GOOGLECH="translate.google.ch"
+debug_mode = hasattr(sys, 'gettrace') and sys.gettrace()
+
+
 
 def b(service,path):
     if path.startswith("/"):path=path[1:]
@@ -22,6 +27,11 @@ def getitem(obj,indexs):
     return obj
 def setitem(obj,indexs,value):
     getitem(obj,indexs[:-1])[indexs[-1]]=value
+    
+def analyse_json(j):
+    with open("debug.json","w") as f:
+        json.dump(j,f,indent=4)
+    return
 class GoogleTrans:
     def __init__(self,service=S_GOOGLECH,client=["t","gtx","dict-chrome-ex"],path="translate_a/single",input_encoding="UTF-8",output_encoding="UTF-8"):
         self.service=service
@@ -37,7 +47,8 @@ class GoogleTrans:
         p="&".join(map(lambda i:(str(i[0])+"="+quote_plus(i[1])),params.items()))
         for c in self.client.copy():
             url=base+"?client="+c+"&"+p
-            print(url)
+            if debug_mode:
+                print(url)
             r=requests.get(url)
             try:
                 r.raise_for_status()
@@ -52,6 +63,7 @@ class GoogleTrans:
             if isinstance(t,str):return t
             return j
         raise error
+    
     def translate(self,text,dest="en",src="auto",alternative=False):
         j=self._request(sl=src,tl=dest,dt=("at" if alternative else "t"),q=text)
         if isinstance(j,str):return j
@@ -61,18 +73,23 @@ class GoogleTrans:
                 tr.append(e["word_postproc"])
             return tr
         return j["sentences"][0]["trans"]
+    
     def transcription(self,word,src="auto"):
         j=self._request(sl=src,dt="rm",q=word)
         try:
             return j["sentences"][0]["src_translit"]
-        except:return
-    def dictionary(self,text,dest="en",src="auto"):
+        except:
+            analyse_json(j)
+            return
+        
+    def translations(self,text,dest="en",src="auto"):
         j=self._request(sl=src,tl=dest,dt="bd",q=text)
         d={}
         for e in j["dict"][0]["entry"]:
             d[e["word"]]=e["reverse_translation"]
         return d
-    def definitions(self,word,src="auto",hl="src",defs=True,syns=True,ex=True,seealso=True):
+    
+    def definitions(self,word,src="auto",hl="src",defs=True,syns=True,examples=True,seealso=True):
         global df,dr
         hl=src if hl=="src" else hl
         def add(id,**params):
@@ -199,8 +216,9 @@ class GoogleTrans:
                             
                     new=0
                 
-        if ex:
+        if examples:
             j=self._request(sl=src,dt="ex",q=word)
+            analyse_json(j)
             #mypkg.open_data(j)
             if "examples" in j:
                 for d in j["examples"]["example"]:
